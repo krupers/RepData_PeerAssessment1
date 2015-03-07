@@ -1,25 +1,209 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research (Peer Assessment 1)"
+author: "Artur Krupa"
+date: "Saturday, March 07, 2015"
+output: html_document
 ---
 
+## Intoduction
 
-## Loading and preprocessing the data
+It is now possible to collect a large amount of data about personal
+movement using activity monitoring devices such as a
+[Fitbit](http://www.fitbit.com), [Nike
+Fuelband](http://www.nike.com/us/en_us/c/nikeplus-fuelband), or
+[Jawbone Up](https://jawbone.com/up). These type of devices are part of
+the "quantified self" movement -- a group of enthusiasts who take
+measurements about themselves regularly to improve their health, to
+find patterns in their behavior, or because they are tech geeks. But
+these data remain under-utilized both because the raw data are hard to
+obtain and there is a lack of statistical methods and software for
+processing and interpreting the data.
+
+This assignment makes use of data from a personal activity monitoring
+device. This device collects data at 5 minute intervals through out the
+day. The data consists of two months of data from an anonymous
+individual collected during the months of October and November, 2012
+and include the number of steps taken in 5 minute intervals each day.
+
+## Data
+
+The data for this assignment can be downloaded from the course web
+site:
+
+* Dataset: [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) [52K]
+
+The variables included in this dataset are:
+
+* **steps**: Number of steps taking in a 5-minute interval (missing
+    values are coded as `NA`)
+
+* **date**: The date on which the measurement was taken in YYYY-MM-DD
+    format
+
+* **interval**: Identifier for the 5-minute interval in which
+    measurement was taken
+
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this
+dataset.
 
 
+## Main project section
+### Loading and processing basic data
+1. We must to load data using "read.csv" command on our original zip archive with data:
+```{r}
+activityData <- read.csv(unzip("repdata_data_activity.zip"))
+```
 
-## What is mean total number of steps taken per day?
+### What is mean total number of steps taken per day?
 
+To answer this question, let's have a look at a histogram of total steps taken per day.
 
+To do this, we must to prepare a variable and plot a histogram (based on barplot command!)
+```{r}
+stepsDate <- aggregate(steps ~ date, activityData, sum)
+barplot(stepsDate$steps,
+        names.arg=stepsDate$date,
+        main="Total number of steps per day",
+        xlab="Date",
+        ylab="Steps",
+        col="#00BFC4")
 
-## What is the average daily activity pattern?
+```
 
+Our question is about mean and median of total number of steps, so check this:
+```{r}
+meanSteps <- mean(stepsDate$steps)
+medianSteps <- median(stepsDate$steps)
+```
+Our results - mean...
+```{r,echo=FALSE}
+meanSteps
+```
+and median
+```{r,echo=FALSE}
+medianSteps
+```
 
+### What is the average daily activity pattern?
+First task about this question is to make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+stepsInterval <- aggregate(steps ~ interval, data = activityData, FUN = mean)
+plot(stepsInterval, type = "l", main="Average Daily Activity Pattern", xlab="Interval", ylab="Steps", col="#FE0000")
+```
 
-## Imputing missing values
+Second task is to answer on question: Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
+```{r}
+stepsInterval$interval[which.max(stepsInterval$steps)]
+```
 
+### Missing values
+Last part is to manage missing values in our dataset.
 
-## Are there differences in activity patterns between weekdays and weekends?
+#### 1.) Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with "NA")
+
+To calculate this, we can assing new variable:
+```{r}
+missingValues <- sum(is.na(activityData$steps))
+```
+And the result is:
+```{r,echo=FALSE}
+missingValues
+```
+
+#### 2.) Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+We can use as we can read in above example - mean for that 5-minute interval:
+```{r}
+fillNA <- data.frame(activityData$steps)
+fillNA[is.na(fillNA),] <- ceiling(tapply(X=activityData$steps,
+                                         INDEX=activityData$interval,
+                                         FUN=mean,
+                                         na.rm=TRUE))
+```
+
+#### 3.) Create a new dataset that is equal to the original dataset but with the missing data filled in.
+To do this, we create new variable with data:
+```{r}
+activityDataNew <- cbind(fillNA, activityData[,2:3])
+colnames(activityDataNew) <- c("steps", "date", "interval")
+```
+
+### 4.) Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
+
+We must to create new variable, preapare data to plot and do the plot:
+```{r}
+stepsDateNew <- aggregate(steps ~ date, activityDataNew, sum)
+barplot(stepsDateNew$steps,
+         names.arg=stepsDateNew$date,
+         main="Total number of steps per day",
+         xlab="Date",
+         ylab="Steps",
+         col="#00BFC4")
+```
+
+Our question is about mean and median of total number of steps, so check this:
+```{r}
+meanStepsNew <- mean(stepsDateNew$steps)
+medianStepsNew <- median(stepsDateNew$steps)
+```
+Our results - mean...
+```{r,echo=FALSE}
+meanStepsNew
+```
+and median
+```{r,echo=FALSE}
+medianStepsNew
+```
+
+Answering on questions to this task:
+
+* Do these values differ from the estimates from the first part of the assignment?
+
+Mean of steps taken by day before our "filling the NA" was 10766.19, now is 10784.92.
+Median of step taken by the day before our "filling the NA" was 10765, now is 10909.
+
+* What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+So we can see, that Mean and Median are larger after filling the data. These days has default number of steps per day equal 0, now have a value.
+
+### Are there differences in activity patterns between weekdays and weekends?
+
+#### 1.) Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+!!Notice!!
+To create this document in my environment I needed to use Polish words for weekend ("sobota" and "niedziela").
+To test this script yourself - you must to change both words into English "Saturday" and "Sunday"!!
+
+```{r}
+typeOfDay <- function(date) {
+    if (weekdays(as.Date(date)) %in% c("sobota", "niedziela")) {
+        "weekend"
+    } else {
+        "weekday"
+    }
+}
+activityDataNew$daytype <- as.factor(sapply(X=activityDataNew$date, FUN=typeOfDay))
+```
+
+#### 2.) Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+First we must to calculate a mean of steps taken for each 5-minute interval and save into new variable:
+```{r}
+finalData <- aggregate(data=activityDataNew,
+                       steps ~ daytype + interval,
+                       FUN=mean)
+```
+
+Now we can make a final plot:
+```{r}
+library("lattice")
+xyplot(
+     type="l",
+     data=finalData,
+     steps ~ interval | daytype,
+     main="Average Daily Activity",
+     xlab="Interval",
+     ylab="Number of steps",
+     layout=c(1,2)
+)
+```

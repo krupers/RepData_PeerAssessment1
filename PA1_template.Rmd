@@ -69,7 +69,7 @@ barplot(stepsDate$steps,
         col="#00BFC4")
 
 ```
-
+![Plot1](instructions_fig/plot1.png) 
 Our question is about mean and median of total number of steps, so check this:
 ```{r}
 meanSteps <- mean(stepsDate$steps)
@@ -90,6 +90,7 @@ First task about this question is to make a time series plot (i.e. type = "l") o
 stepsInterval <- aggregate(steps ~ interval, data = activityData, FUN = mean)
 plot(stepsInterval, type = "l", main="Average Daily Activity Pattern", xlab="Interval", ylab="Steps", col="#FE0000")
 ```
+![Plot2](instructions_fig/plot2.png) 
 
 Second task is to answer on question: Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
@@ -141,6 +142,7 @@ barplot(stepsDateNew$steps,
          ylab="Steps",
          col="#00BFC4")
 ```
+![Plot3](instructions_fig/plot3.png) 
 
 Our question is about mean and median of total number of steps, so check this:
 ```{r}
@@ -207,3 +209,4 @@ xyplot(
      layout=c(1,2)
 )
 ```
+![Plot4](instructions_fig/plot4.png) 
